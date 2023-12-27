@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/Masterminds/sprig"
+	"github.com/Masterminds/sprig/v3"
 )
 
 var tmpl *template.Template
@@ -27,9 +27,9 @@ func parseTemplates() error {
 		}
 		return err
 	})
-  if err != nil {
-    return err
-  }
-  tmpl = t
-  return nil
+	if err != nil {
+		return err
+	}
+	tmpl = t
+	return nil
 }

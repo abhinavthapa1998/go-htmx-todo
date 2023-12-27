@@ -1,8 +1,6 @@
 package main
 
-import (
-	"context"
-)
+import "context"
 
 type Item struct {
 	ID        int
@@ -36,8 +34,7 @@ func fetchTasks() ([]Item, error) {
 
 func fetchTask(ID int) (Item, error) {
 	var item Item
-	err := DB.QueryRow("select id, title, completed from tasks where id = (?)", ID).
-		Scan(&item.ID, &item.Title, &item.Completed)
+	err := DB.QueryRow("select id, title, completed from tasks where id = (?)", ID).Scan(&item.ID, &item.Title, &item.Completed)
 	if err != nil {
 		return Item{}, err
 	}
@@ -46,8 +43,7 @@ func fetchTask(ID int) (Item, error) {
 
 func updateTask(ID int, title string) (Item, error) {
 	var item Item
-	err := DB.QueryRow("update tasks set title = (?) where id = (?) returning id, title, completed", title, ID).
-		Scan(&item.ID, &item.Title, &item.Completed)
+	err := DB.QueryRow("update tasks set title = (?) where id = (?) returning id, title, completed", title, ID).Scan(&item.ID, &item.Title, &item.Completed)
 	if err != nil {
 		return Item{}, err
 	}
@@ -63,14 +59,22 @@ func fetchCount() (int, error) {
 	return count, nil
 }
 
+func fetchCompletedCount() (int, error) {
+	var count int
+	err := DB.QueryRow("select count(*) from tasks where completed = 1;").Scan(&count)
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
+}
+
 func insertTask(title string) (Item, error) {
 	count, err := fetchCount()
 	if err != nil {
 		return Item{}, err
 	}
 	var id int
-	err = DB.QueryRow("insert into tasks (title, postition) values (?,?) returning id", title, count).
-		Scan(&id)
+	err = DB.QueryRow("insert into tasks (title, position) values (?, ?) returning id", title, count).Scan(&id)
 	if err != nil {
 		return Item{}, err
 	}
@@ -106,29 +110,37 @@ func deleteTask(ctx context.Context, ID int) error {
 		if err != nil {
 			return err
 		}
-		err = tx.Commit()
-		if err != nil {
-			return err
-		}
+	}
+	err = tx.Commit()
+	if err != nil {
+		return err
 	}
 	return nil
 }
 
 func orderTasks(ctx context.Context, values []int) error {
-  tx, err := DB.BeginTx(ctx, nil)
-  if err != nil {
-    return err
-  }
-  defer tx.Rollback()
-  for i, v := range values {
-    _, err := tx.Exec("update tasks set position = (?) where id = (?)", i, v)
-    if err != nil {
-      return err
-    }
-  }
-  if err := tx.Commit(); err != nil {
-    return err
-  }
-  return nil
+	tx, err := DB.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+	for i, v := range values {
+		_, err := tx.Exec("update tasks set position = (?) where id = (?)", i, v)
+		if err != nil {
+			return err
+		}
+	}
+	if err := tx.Commit(); err != nil {
+		return err
+	}
+	return nil
 }
 
+func toggleTask(ID int) (Item, error) {
+	var item Item
+	err := DB.QueryRow("update tasks set completed = case when completed = 1 then 0 else 1 end where id = (?) returning id, title, completed", ID).Scan(&item.ID, &item.Title, &item.Completed)
+	if err != nil {
+		return Item{}, err
+	}
+	return item, nil
+}

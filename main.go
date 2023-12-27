@@ -24,8 +24,11 @@ func main() {
 	}
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
-	r.Get("/", func(w http.ResponseWriter, _ *http.Request) {
-		tmpl.ExecuteTemplate(w, "Base", nil)
-	})
-	http.ListenAndServe("localhost:8080", r)
+	r.Handle("/static/*", http.StripPrefix("/static/", http.FileServer(http.Dir("./static"))))
+	r.Get("/", handleGetTasks)
+	r.Post("/tasks", handleCreateTask)
+	r.Put("/tasks/{id}/toggle", handleToggleTask)
+	r.Delete("/tasks/{id}", handleDeleteTask)
+	r.Get("/tasks/{id}/edit", handleEditTask)
+	http.ListenAndServe("localhost:3000", r)
 }

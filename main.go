@@ -10,15 +10,15 @@ import (
 )
 
 func main() {
-  err := openDB()
-  if err != nil {
-    log.Panic(err)
-  }
-  defer closeDB()
-  err = setupDB()
-  if err != nil {
-    log.Panic(err)
-  }
+	err := openDB()
+	if err != nil {
+		log.Panic(err)
+	}
+	defer closeDB()
+	err = setupDB()
+	if err != nil {
+		log.Panic(err)
+	}
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 	r.Get("/", func(w http.ResponseWriter, _ *http.Request) {
